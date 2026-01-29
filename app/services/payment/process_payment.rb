@@ -7,18 +7,17 @@ class Payment::ProcessPayment < ApplicationService
   end
 
   def call
-    provider = Payment::ProviderFactory.provider_for(payment)
-    result = provider.process(payment)
+    result = provider.process(payment.attributes.symbolize_keys)
 
     if result[:error]
-      payment.decline!
-      return failure(result[:error])
+      payment.decline!(result["error"])
+      return failure(result["error"])
     end
 
     payment.approve!(result)
     success(payment)
   rescue => e
-    payment.error!
+    payment.error!(e.message)
     failure(e.message)
   end
 end
